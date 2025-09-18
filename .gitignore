@@ -51,7 +51,6 @@ Icon
 .com.apple.timemachine.donotpresent
 
 # Project specific
-data/generated/
 *.log
 .coverage
 htmlcov/
