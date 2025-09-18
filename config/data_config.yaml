@@ -1,0 +1,163 @@
+# ToolACE 数据生成配置文件
+
+# SDG (Self-Guided Dialog Generation) 配置  
+sdg:  
+  # mdoels
+  user_model: claude_3d7
+  assistant_model: claude_3d7
+  tool_model: claude_3d7
+  
+  # 复杂度控制
+  complexity_range: [0.3, 0.8]
+  optimal_complexity_range: [0.4, 0.7]
+  complexity_adjustment_step: 0.1
+    
+  # API采样配置
+  max_apis_per_dialog: 5
+
+  # subtasks最大最小值
+  min_subtasks: 2
+  max_subtasks: 3
+
+  # 在subtasks中最大的react轮次
+  max_react_steps: 10
+  mini_react_steps: 2
+  
+  # 代理配置
+  agents:
+    user_agent:
+      temperature: 1.0
+      max_tokens: 12384
+      max_retries: 3
+      related_prob: 0.5
+      complication_strategies:
+        - "increase_apis"
+        - "add_constraints"
+        - "increase_dissimilarity"
+        
+    assistant_agent:
+      temperature: 1.0
+      max_tokens: 12384
+      thinking_steps: 5
+      consistency_check_instances: 3
+      consistency_threshold: 0.8
+      
+    tool_agent:
+      temperature: 1.0
+      max_tokens: 12384
+      simulation_mode: "realistic"
+      error_rate: 0.2
+      response_variance: 0.1
+
+# DLV (Dual-Layer Verification) 配置
+dlv:
+  # 规则检查器配置
+  rule_checker:
+    strict_mode: true
+    error_tolerance: 0
+    custom_rules_path: "config/verification_rules.yaml"
+    
+    # 检查项目
+    checks:
+      api_definition_clarity: true
+      function_call_executability: true  
+      dialog_correctness: true
+      data_sample_consistency: true
+      parameter_format_validation: true
+      
+  # 模型检查器配置
+  model_checker:
+    model_path: "models/verification-llm"
+    batch_size: 16
+    max_tokens: 1024
+    temperature: 0.3
+    
+    # 检查阈值
+    thresholds:
+      hallucination_threshold: 0.3
+      consistency_threshold: 0.7
+      tool_response_threshold: 0.6
+      overall_quality_threshold: 0.75
+      
+    # 专家代理配置
+    expert_agents:
+      hallucination_detector:
+        enabled: true
+        weight: 0.4
+      consistency_validator: 
+        enabled: true
+        weight: 0.4
+      tool_response_checker:
+        enabled: true
+        weight: 0.2
+        
+  # 人工审核配置
+  human_review:
+    enabled: true
+    sampling_rate: 0.05  # 5% 抽样审核
+    priority_errors:
+      - "hallucination"
+      - "inconsistency" 
+      - "execution_error"
+    review_batch_size: 100
+    
+  # 输出配置
+  output:
+    save_reports: true
+    report_path: "data/verification_reports/"
+    save_failed_cases: true
+    failed_cases_path: "data/verification_failed/"
+    export_format: "json"
+
+# 通用配置
+general:
+  # 并行处理
+  num_workers: 8
+  batch_size: 32
+  
+  # 日志配置
+  logging:
+    level: "INFO"
+    log_path: "logs/"
+    max_log_size: "100MB"
+    backup_count: 5
+    
+  # 缓存配置
+  cache:
+    enabled: true
+    cache_dir: "cache/"
+    max_cache_size: "1GB"
+    
+  # 随机种子
+  random_seed: 42
+  
+  # 输出路径
+  output_paths:
+    generated_apis: "data/generated/apis/"
+    generated_dialogs: "data/generated/dialogs/"
+    verified_data: "data/generated/verified/"
+    training_data: "data/training/"
+    
+# 实验配置
+experiments:
+  # A/B测试配置
+  ablation_studies:
+    enabled: false
+    test_tss_only: false
+    test_sdg_only: false
+    test_dlv_only: false
+    
+  # 数据量控制
+  data_limits:
+    max_apis_per_experiment: 1000
+    max_dialogs_per_experiment: 5000
+    
+  # 评估配置
+  evaluation:
+    benchmarks:
+      - "BFCL"
+      - "APIBank"
+    metrics:
+      - "accuracy"
+      - "hallucination_rate"
+      - "consistency_score"

@@ -1,0 +1,311 @@
+{
+  "examples": [
+    {
+      "name": "get_weather_forecast",
+      "description": "获取指定地点的详细天气预报信息，支持多天预报和小时级数据",
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "location": {
+            "type": "string",
+            "description": "地理位置，可以是城市名、坐标或地址"
+          },
+          "days": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 14,
+            "default": 7,
+            "description": "预报天数，范围1-14天"
+          },
+          "include_hourly": {
+            "type": "boolean",
+            "default": false,
+            "description": "是否包含每小时天气数据"
+          },
+          "units": {
+            "type": "string",
+            "enum": ["metric", "imperial", "standard"],
+            "default": "metric",
+            "description": "温度单位系统"
+          },
+          "language": {
+            "type": "string",
+            "pattern": "^[a-z]{2}$",
+            "default": "zh",
+            "description": "返回语言代码"
+          }
+        },
+        "required": ["location"]
+      },
+      "returns": {
+        "type": "object",
+        "properties": {
+          "location": {
+            "type": "object",
+            "properties": {
+              "name": {"type": "string"},
+              "coordinates": {
+                "type": "object",
+                "properties": {
+                  "lat": {"type": "number"},
+                  "lon": {"type": "number"}
+                }
+              }
+            }
+          },
+          "current": {
+            "type": "object",
+            "properties": {
+              "temperature": {"type": "number"},
+              "humidity": {"type": "number"},
+              "pressure": {"type": "number"},
+              "wind_speed": {"type": "number"},
+              "description": {"type": "string"}
+            }
+          },
+          "forecast": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "date": {"type": "string", "format": "date"},
+                "temperature_max": {"type": "number"},
+                "temperature_min": {"type": "number"},
+                "description": {"type": "string"},
+                "precipitation": {"type": "number"}
+              }
+            }
+          }
+        }
+      },
+      "domain": "天气服务",
+      "functionalities": ["获取天气预报", "当前天气", "历史天气"],
+      "complexity_score": 0.7,
+      "constraints": [
+        "location必须是有效的地理位置",
+        "days范围限制在1-14天",
+        "language必须是ISO 639-1标准代码"
+      ],
+      "examples": [
+        {
+          "description": "获取北京7天天气预报",
+          "parameters": {
+            "location": "北京",
+            "days": 7,
+            "include_hourly": true
+          },
+          "expected_return": {
+            "location": {
+              "name": "北京市",
+              "coordinates": {"lat": 39.9042, "lon": 116.4074}
+            },
+            "current": {
+              "temperature": 25.3,
+              "humidity": 65,
+              "pressure": 1013,
+              "wind_speed": 12.5,
+              "description": "多云"
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "query_stock_price",
+      "description": "查询股票实时价格和相关市场信息",
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "symbol": {
+            "type": "string",
+            "pattern": "^[A-Z0-9]{1,10}$",
+            "description": "股票代码，如AAPL、000001等"
+          },
+          "market": {
+            "type": "string",
+            "enum": ["US", "CN", "HK", "UK"],
+            "description": "市场代码"
+          },
+          "data_type": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "enum": ["price", "volume", "market_cap", "pe_ratio", "dividend"]
+            },
+            "description": "需要查询的数据类型"
+          },
+          "period": {
+            "type": "string",
+            "enum": ["1d", "5d", "1m", "3m", "6m", "1y"],
+            "default": "1d",
+            "description": "查询时间周期"
+          }
+        },
+        "required": ["symbol"]
+      },
+      "returns": {
+        "type": "object",
+        "properties": {
+          "symbol": {"type": "string"},
+          "company_name": {"type": "string"},
+          "current_price": {"type": "number"},
+          "change": {"type": "number"},
+          "change_percent": {"type": "number"},
+          "volume": {"type": "integer"},
+          "market_cap": {"type": "number"},
+          "timestamp": {"type": "string", "format": "date-time"}
+        }
+      },
+      "domain": "金融服务",
+      "functionalities": ["股票价格查询", "市场数据分析"],
+      "complexity_score": 0.6,
+      "constraints": [
+        "symbol必须是有效的股票代码",
+        "市场必须在交易时间内查询实时数据"
+      ],
+      "examples": [
+        {
+          "description": "查询苹果股票价格",
+          "parameters": {
+            "symbol": "AAPL",
+            "market": "US",
+            "data_type": ["price", "volume", "market_cap"],
+            "period": "1d"
+          },
+          "expected_return": {
+            "symbol": "AAPL",
+            "company_name": "Apple Inc.",
+            "current_price": 175.50,
+            "change": 2.35,
+            "change_percent": 1.36,
+            "volume": 45623000
+          }
+        }
+      ]
+    },
+    {
+      "name": "search_music",
+      "description": "搜索音乐并提供播放控制功能",
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "query": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 200,
+            "description": "搜索关键词，可以是歌名、歌手、专辑等"
+          },
+          "type": {
+            "type": "string",
+            "enum": ["song", "artist", "album", "playlist"],
+            "default": "song",
+            "description": "搜索类型"
+          },
+          "limit": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 100,
+            "default": 20,
+            "description": "返回结果数量限制"
+          },
+          "filters": {
+            "type": "object",
+            "properties": {
+              "genre": {
+                "type": "array",
+                "items": {"type": "string"},
+                "description": "音乐风格过滤"
+              },
+              "year_range": {
+                "type": "object",
+                "properties": {
+                  "start": {"type": "integer", "minimum": 1900},
+                  "end": {"type": "integer", "maximum": 2024}
+                },
+                "description": "发行年份范围"
+              },
+              "duration": {
+                "type": "object",
+                "properties": {
+                  "min_seconds": {"type": "integer", "minimum": 0},
+                  "max_seconds": {"type": "integer", "maximum": 3600}
+                },
+                "description": "歌曲时长范围"
+              }
+            },
+            "description": "搜索过滤条件"
+          }
+        },
+        "required": ["query"]
+      },
+      "returns": {
+        "type": "object",
+        "properties": {
+          "results": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "id": {"type": "string"},
+                "title": {"type": "string"},
+                "artist": {"type": "string"},
+                "album": {"type": "string"},
+                "duration": {"type": "integer"},
+                "genre": {"type": "string"},
+                "release_year": {"type": "integer"},
+                "preview_url": {"type": "string", "format": "uri"}
+              }
+            }
+          },
+          "total_count": {"type": "integer"},
+          "search_time": {"type": "number"}
+        }
+      },
+      "domain": "娱乐服务",
+      "functionalities": ["音乐搜索", "音乐播放", "推荐系统"],
+      "complexity_score": 0.8,
+      "constraints": [
+        "query不能为空",
+        "搜索结果基于版权可用性",
+        "preview_url可能因版权限制不可用"
+      ],
+      "examples": [
+        {
+          "description": "搜索周杰伦的歌曲",
+          "parameters": {
+            "query": "周杰伦",
+            "type": "artist",
+            "limit": 10,
+            "filters": {
+              "year_range": {"start": 2000, "end": 2020},
+              "genre": ["流行", "说唱"]
+            }
+          },
+          "expected_return": {
+            "results": [
+              {
+                "id": "song_001",
+                "title": "青花瓷",
+                "artist": "周杰伦",
+                "album": "我很忙",
+                "duration": 238,
+                "genre": "流行",
+                "release_year": 2007
+              }
+            ],
+            "total_count": 156,
+            "search_time": 0.23
+          }
+        }
+      ]
+    }
+  ],
+  "metadata": {
+    "total_examples": 3,
+    "domains_covered": ["天气服务", "金融服务", "娱乐服务"],
+    "complexity_range": [0.6, 0.8],
+    "parameter_types_used": ["string", "integer", "boolean", "array", "object"],
+    "creation_date": "2024-01-15",
+    "version": "1.0"
+  }
+}

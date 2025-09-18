@@ -1,0 +1,98 @@
+# ToolACE 项目依赖包
+
+# 核心深度学习框架
+torch>=2.0.0
+transformers>=4.30.0
+datasets>=2.14.0
+accelerate>=0.20.0
+
+# LoRA和PEFT
+peft>=0.4.0
+
+# 数据处理
+numpy>=1.24.0
+pandas>=2.0.0
+scipy>=1.10.0
+
+# 配置文件处理
+PyYAML>=6.0
+omegaconf>=2.3.0
+
+# JSON处理和验证
+jsonschema>=4.17.0
+jsonlines>=3.1.0
+
+# 文本处理
+nltk>=3.8
+spacy>=3.6.0
+regex>=2023.6.3
+
+# API和网络请求
+requests>=2.31.0
+httpx>=0.24.0
+openai>=0.27.0  # 如果需要使用OpenAI API
+
+# 日志和监控
+loguru>=0.7.0
+wandb>=0.15.0  # 可选：实验跟踪
+tensorboard>=2.13.0
+
+# 数据可视化
+matplotlib>=3.7.0
+seaborn>=0.12.0
+plotly>=5.15.0
+
+# 并行处理
+joblib>=1.3.0
+multiprocessing-logging>=0.3.4
+
+# 进度条
+tqdm>=4.65.0
+rich>=13.4.0
+
+# 测试框架
+pytest>=7.4.0
+pytest-cov>=4.1.0
+
+# 代码质量
+black>=23.3.0
+flake8>=6.0.0
+isort>=5.12.0
+
+# 类型检查
+mypy>=1.4.0
+typing-extensions>=4.7.0
+
+# 文档生成
+sphinx>=7.1.0
+sphinx-rtd-theme>=1.3.0
+
+# 工具函数
+python-dotenv>=1.0.0
+pathlib2>=2.3.7  # Python < 3.6 兼容性
+click>=8.1.0  # 命令行工具
+
+# 数据库（可选）
+sqlite3  # Python内置
+sqlalchemy>=2.0.0  # 如果需要更复杂的数据存储
+
+# 内存优化
+psutil>=5.9.0
+
+# 时间处理
+python-dateutil>=2.8.0
+
+# 缓存
+diskcache>=5.6.0
+
+# 加密和安全
+cryptography>=41.0.0
+
+# 文件操作
+pathvalidate>=3.1.0
+
+# 正则表达式增强
+regex>=2023.6.3
+
+# 并发处理
+concurrent-futures>=3.1.1  # Python 2 兼容性
