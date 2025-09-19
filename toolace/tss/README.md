@@ -1,125 +1,101 @@
-# Tool Self-Evolution Synthesis (TSS) 模块
+# Tool Self-Evolution Synthesis (TSS) Module
 
-## 📖 模块概述
+## 📖 Module Overview
 
-Tool Self-Evolution Synthesis (TSS) 是ToolACE框架的核心模块之一，负责自动生成多样化、高质量的API定义。该模块通过模拟生物进化过程，从预训练数据中提取API领域知识，并通过物种形成、适应和演化三个步骤创建全面的API池。
+Tool Self-Evolution Synthesis (TSS) is a core module of the ToolACE framework, responsible for automatically generating diverse, high-quality API definitions. This module simulates biological evolution to extract API domain knowledge from pre-training data and creates a comprehensive API pool through three steps: speciation, adaptation, and evolution.
 
-## 🎯 核心功能
+## 🎯 Core Features
 
-TSS模块生成了包含26,507个API的综合API池，覆盖390个不同领域，支持：
-- 嵌套参数类型（列表的列表、字典的列表等）
-- 多样化的数据类型和约束
-- 跨领域的API功能覆盖
-- 自演化和持续更新机制
+The TSS module supports:
+- Nested parameter types (lists of lists, dictionaries of lists, etc.)
+- Diverse data types and constraints
+- Cross-domain API functionality coverage
+- Self-evolution and continuous update mechanism
 
-## 🏗️ 模块架构
+## 🏗️ Module Architecture
 
 ```
 tss/
-├── README.md                    # 本文档
-├── __init__.py                  # 模块初始化
-├── speciation.py               # 物种形成：API上下文树构建
-├── adaptation.py               # 适应：域和多样性级别指定
-├── evolution.py                # 演化：API持续改进和生成
-└── api_pool.py                 # API池管理和维护
+├── README.md                    # This document
+├── __init__.py                 # Module initialization
+├── speciation.py               # API context tree construction
+├── adaptation.py               # Domain and diversity level specification
+├── evolution.py                # API continuous improvement
+└── api_pool.py                 # API pool management
 ```
 
-## 🔄 三步演化过程
+## 🔄 Three-Step Evolution Process
 
-### 1. Speciation (物种形成)
-- **目标**: 构建分层API上下文树，指导合成过程
-- **输入**: 预训练数据中的API相关文档
-- **过程**: 
-  - 从技术手册、API文档、产品规格等提取API领域
-  - 递归生成API功能和用例的层次结构
-  - 创建涵盖各种应用和行业的综合上下文树
-- **输出**: 分层API上下文树，每个节点代表可能的API功能
+### 1. Speciation
+- **Goal**: Build hierarchical API context trees to guide synthesis
+- **Input**: API-related documents from pre-training data
+- **Process**: 
+  - Extract API domains from technical manuals and documentation
+  - Generate hierarchical structure of API functionalities
+  - Create comprehensive context trees covering various applications
+- **Output**: Hierarchical API context tree with nodes representing potential API functions
 
-### 2. Adaptation (适应)
-- **目标**: 为每个API指定领域和多样性级别
-- **过程**:
-  - 从API上下文树中采样子树
-  - 为每个API获取独特的功能组合
-  - 控制API的复杂度和专业化程度
-- **多样性控制**:
-  - 某些API覆盖更多节点→更多领域特定和详细能力
-  - 某些API只包含单个节点→简单直接的功能
+### 2. Adaptation
+- **Goal**: Specify domain and diversity levels for each API
+- **Process**:
+  - Sample subtrees from API context tree
+  - Obtain unique functionality combinations for each API
+  - Control API complexity and specialization level
+- **Diversity Control**:
+  - Some APIs cover more nodes → more domain-specific capabilities
+  - Some APIs contain single nodes → simple direct functions
 
-### 3. Evolution (演化)
-- **目标**: 基于结果和新需求持续改进API
-- **过程**:
-  - 根据采样的子树和API示例生成新API
-  - 应用多样性指标进行变异和改进
-  - 维护API示例缓冲区供迭代使用
-- **多样性指标**:
-  - 添加新功能或参数
-  - 包含额外约束
-  - 变异参数类型
-  - 更新返回结果
+### 3. Evolution
+- **Goal**: Continuously improve APIs based on results and requirements
+- **Process**:
+  - Generate new APIs based on sampled subtrees and examples
+  - Apply diversity metrics for mutations and improvements
+  - Maintain API example buffer for iterations
+- **Diversity Metrics**:
+  - Add new functionalities or parameters
+  - Include additional constraints
+  - Mutate parameter types
+  - Update return results
 
-## 📁 文件详细说明
+## 📁 File Details
 
 ### `speciation.py`
-负责从预训练数据构建API上下文树的核心逻辑：
+Core logic for building API context trees from pre-training data:
 
-**主要功能**:
-- 解析预训练数据中的API相关文档
-- 提取API领域和功能信息
-- 构建分层上下文树结构
-- 支持递归节点生成
-
-**关键类/函数**:
-- `APIContextTree`: API上下文树的数据结构
-- `extract_api_domains()`: 从文档中提取API领域
-- `build_context_tree()`: 构建分层上下文树
-- `get_api_functionalities()`: 获取API功能列表
+**Key Functions**:
+- `APIContextTree`: Data structure for API context tree
+- `extract_api_domains()`: Extract API domains from documents
+- `build_context_tree()`: Build hierarchical context tree
+- `get_api_functionalities()`: Get list of API functionalities
 
 ### `adaptation.py`
-处理API的领域适应和多样性级别指定：
+Handles domain adaptation and diversity level specification:
 
-**主要功能**:
-- 从上下文树中采样子树
-- 为API分配独特功能组合
-- 控制API复杂度和专业化程度
-- 确保API功能的唯一性
-
-**关键类/函数**:
-- `DomainAdapter`: 领域适应器
-- `sample_subtree()`: 子树采样算法
-- `assign_functionalities()`: 功能分配逻辑
-- `calculate_diversity_level()`: 多样性级别计算
+**Key Functions**:
+- `DomainAdapter`: Domain adapter class
+- `sample_subtree()`: Subtree sampling algorithm
+- `assign_functionalities()`: Functionality assignment logic
+- `calculate_diversity_level()`: Diversity level calculation
 
 ### `evolution.py`
-实现API的持续演化和改进机制：
+Implements continuous API evolution mechanism:
 
-**主要功能**:
-- 基于子树和示例生成新API
-- 应用多样性指标进行API变异
-- 管理API生成的迭代过程
-- 确保生成API的质量和多样性
-
-**关键类/函数**:
-- `APIEvolver`: API演化器
-- `generate_api()`: API生成核心算法
-- `apply_diversity_mutations()`: 应用多样性变异
-- `validate_api_definition()`: API定义验证
+**Key Functions**:
+- `APIEvolver`: API evolution class
+- `generate_api()`: Core API generation algorithm
+- `apply_diversity_mutations()`: Apply diversity mutations
+- `validate_api_definition()`: API definition validation
 
 ### `api_pool.py`
-管理和维护整个API池：
+Manages the API pool:
 
-**主要功能**:
-- API池的存储和检索
-- API示例缓冲区管理
-- API质量评估和筛选
-- 统计信息收集和报告
+**Key Functions**:
+- `APIPool`: API pool manager class
+- `add_api()`: Add API to pool
+- `sample_apis()`: Sample APIs from pool
+- `get_pool_statistics()`: Get pool statistics
 
-**关键类/函数**:
-- `APIPool`: API池管理器
-- `add_api()`: 添加API到池中
-- `sample_apis()`: 从池中采样API
-- `get_pool_statistics()`: 获取池统计信息
-
-## 🔧 使用示例
+## 🔧 Usage Example
 
 ```python
 from toolace.tss import TSS
@@ -127,88 +103,81 @@ from toolace.tss.speciation import APIContextTree
 from toolace.tss.adaptation import DomainAdapter
 from toolace.tss.evolution import APIEvolver
 
-# 初始化TSS模块
+# Initialize TSS module
 tss = TSS(config_path="config/data_config.yaml")
 
-# 构建API上下文树
+# Build API context tree
 context_tree = APIContextTree()
 context_tree.build_from_pretraining_data("data/raw/pretraining_docs/")
 
-# 领域适应
+# Domain adaptation
 adapter = DomainAdapter(context_tree)
 sampled_subtree = adapter.sample_subtree(diversity_level="medium")
 
-# API演化
+# API evolution
 evolver = APIEvolver()
 new_api = evolver.generate_api(
     subtree=sampled_subtree,
     example_api=tss.api_pool.sample_example()
 )
 
-# 添加到API池
+# Add to API pool
 tss.api_pool.add_api(new_api)
 ```
 
-## 📊 输出数据格式
+## 📊 Output Format
 
-生成的API定义遵循标准JSON Schema格式：
+Generated API definitions follow standard JSON Schema format:
 
 ```json
 {
   "name": "get_weather_forecast",
-  "description": "获取指定地点的天气预报信息",
+  "description": "Get weather forecast for a specified location",
   "parameters": {
     "type": "object",
     "properties": {
       "location": {
         "type": "string",
-        "description": "地理位置（城市名或坐标）"
+        "description": "Geographic location (city name or coordinates)"
       },
       "days": {
         "type": "integer",
         "minimum": 1,
         "maximum": 14,
-        "description": "预报天数"
+        "description": "Number of forecast days"
       },
       "include_hourly": {
         "type": "boolean",
-        "description": "是否包含每小时预报"
+        "description": "Whether to include hourly forecast"
       }
     },
     "required": ["location"]
   },
   "returns": {
     "type": "object",
-    "description": "天气预报数据"
+    "description": "Weather forecast data"
   }
 }
 ```
 
-## 🎯 设计原则
+## 🎯 Design Principles
 
-1. **多样性优先**: 通过自演化确保API的多样性和覆盖面
-2. **质量保证**: 严格的验证机制确保API定义的准确性
-3. **可扩展性**: 支持持续添加新的API领域和功能
-4. **灵活适应**: 根据不同需求调整API复杂度和专业化程度
+1. **Diversity First**: Ensure API diversity through self-evolution
+2. **Quality Assurance**: Strict validation for API definition accuracy
+3. **Extensibility**: Support for adding new API domains and functions
+4. **Flexible Adaptation**: Adjust API complexity based on requirements
 
-## 📈 性能指标
+## 🔗 Integration with Other Modules
 
-- **API数量**: 26,507个独特API
-- **领域覆盖**: 390个不同领域
-- **参数类型**: 支持嵌套复杂类型
-- **生成效率**: 平均每小时生成500+高质量API
-
-## 🔗 与其他模块的集成
-
-TSS模块生成的API池将被SDG模块用于对话生成，生成的API定义需要通过DLV模块的验证。模块间的数据流：
+The API pool generated by TSS module is used by SDG module for dialogue generation, and the generated API definitions need to be validated by DLV module:
 
 ```
-TSS (API生成) → SDG (对话生成) → DLV (质量验证)
+TSS (API Generation) → SDG (Dialog Generation) → DLV (Quality Verification)
 ```
 
-## 🛠️ 配置选项
+## 🛠️ Configuration
 
-在 `config/data_config.yaml` 中可以配置TSS相关参数：
+Configure TSS parameters in `config/data_config.yaml`:
 
 ```yaml
 tss:

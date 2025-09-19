@@ -8,6 +8,7 @@ and generates realistic responses for function calls.
 import json
 import random
 import importlib
+from textwrap import dedent
 from typing import Dict, List, Optional, Any
 from datetime import datetime, timedelta
 from loguru import logger
@@ -106,123 +107,126 @@ class ToolAgent:
         Returns:
             Combined analysis and response data
         """
-        system_prompt = """你就是当前的用户，你需要分析当前对话的任务状态，模拟用户并生成相应的响应。
+        system_prompt = dedent(
+            """你就是当前的用户，你需要分析当前对话的任务状态，模拟用户并生成相应的响应。
 
-分析步骤：
-1. 判断任务是否已经完成
-2. 如果完成，生成后续的问题
-3. 如果未完成，生成澄清请求
+            分析步骤：
+            1. 判断任务是否已经完成
+            2. 如果完成，生成后续的问题
+            3. 如果未完成，生成澄清请求
 
-任务完成的判断标准：
-- 用户的需求是否已经得到满足
-- 助手的回复是否已经提供了完整的解决方案
-- 最近的工具调用结果是否已经满足需求
+            任务完成的判断标准：
+            - 用户的需求是否已经得到满足
+            - 助手的回复是否已经提供了完整的解决方案
+            - 最近的工具调用结果是否已经满足需求
 
-响应要求：
-- 如果任务完成：提供相关的后续建议，建议应该与可用的API功能相关
-- 如果任务未完成：明确指出缺失的信息，并提供澄清
+            响应要求：
+            - 如果任务完成：提供相关的后续建议，建议应该与可用的API功能相关
+            - 如果任务未完成：明确指出缺失的信息，并提供澄清
 
-## 示例1：任务已完成
-对话历史：
-用户: 帮我查询北京今天的天气
-助手: 我来帮您查询北京今天的天气。[调用: get_weather]
-工具[get_weather]: {"city": "北京", "date": "2024-01-15", "weather": "晴", "temperature": "5-15°C", "humidity": "45%"}
-助手: 北京今天天气晴朗，温度5-15°C，湿度45%。出行记得适当增减衣物。
+            ## 示例1：任务已完成
+            对话历史：
+            用户: 帮我查询北京今天的天气
+            助手: 我来帮您查询北京今天的天气。[调用: get_weather]
+            工具[get_weather]: {"city": "北京", "date": "2024-01-15", "weather": "晴", "temperature": "5-15°C", "humidity": "45%"}
+            助手: 北京今天天气晴朗，温度5-15°C，湿度45%。出行记得适当增减衣物。
 
-分析返回：
-```json
-{
-    "task_status": "completed",
-    "response_message": "谢谢！那明天的天气怎么样呢？需要带伞吗？",
-    "related_apis": ["get_weather", "get_weather_forecast"]
-}
-```
+            分析返回：
+            ```json
+            {
+                "task_status": "completed",
+                "response_message": "谢谢！那明天的天气怎么样呢？需要带伞吗？",
+                "related_apis": ["get_weather", "get_weather_forecast"]
+            }
+            ```
 
-## 示例2：任务已完成，询问相关功能
-对话历史：
-用户: 帮我订一张明天从上海到北京的机票
-助手: 我来帮您搜索明天上海到北京的航班。[调用: search_flights]
-工具[search_flights]: {"flights": [{"flight_no": "CA1234", "time": "08:00-10:30", "price": 1200}, {"flight_no": "MU5678", "time": "14:00-16:30", "price": 980}]}
-助手: 找到了两个航班：CA1234早上8点起飞，票价1200元；MU5678下午2点起飞，票价980元。您想预订哪个航班？
-用户: 订下午2点的MU5678
-助手: 好的，我来为您预订MU5678航班。[调用: book_flight]
-工具[book_flight]: {"status": "success", "booking_id": "BK20240115001", "flight": "MU5678", "price": 980}
-助手: 已成功预订！订单号：BK20240115001，MU5678航班，票价980元。
+            ## 示例2：任务已完成，询问相关功能
+            对话历史：
+            用户: 帮我订一张明天从上海到北京的机票
+            助手: 我来帮您搜索明天上海到北京的航班。[调用: search_flights]
+            工具[search_flights]: {"flights": [{"flight_no": "CA1234", "time": "08:00-10:30", "price": 1200}, {"flight_no": "MU5678", "time": "14:00-16:30", "price": 980}]}
+            助手: 找到了两个航班：CA1234早上8点起飞，票价1200元；MU5678下午2点起飞，票价980元。您想预订哪个航班？
+            用户: 订下午2点的MU5678
+            助手: 好的，我来为您预订MU5678航班。[调用: book_flight]
+            工具[book_flight]: {"status": "success", "booking_id": "BK20240115001", "flight": "MU5678", "price": 980}
+            助手: 已成功预订！订单号：BK20240115001，MU5678航班，票价980元。
 
-分析返回：
-```json
-{
-    "task_status": "completed", 
-    "response_message": "太好了，订票成功！对了，我需要从市区去机场，能帮我查一下机场大巴的时刻表吗？",
-    "related_apis": ["get_airport_shuttle", "get_taxi_estimate"]
-}
-```
+            分析返回：
+            ```json
+            {
+                "task_status": "completed", 
+                "response_message": "太好了，订票成功！对了，我需要从市区去机场，能帮我查一下机场大巴的时刻表吗？",
+                "related_apis": ["get_airport_shuttle", "get_taxi_estimate"]
+            }
+            ```
 
-## 示例3：需要澄清信息
-对话历史：
-用户: 帮我订酒店
-助手: 好的，我来帮您预订酒店。请问您想在哪个城市订酒店？
+            ## 示例3：需要澄清信息
+            对话历史：
+            用户: 帮我订酒店
+            助手: 好的，我来帮您预订酒店。请问您想在哪个城市订酒店？
 
-分析返回：
-```json
-{
-    "task_status": "needs_clarification",
-    "response_message": "我想在杭州订酒店，大概这周五入住，住两晚。",
-    "related_apis": ["search_hotels"]
-}
-```
+            分析返回：
+            ```json
+            {
+                "task_status": "needs_clarification",
+                "response_message": "我想在杭州订酒店，大概这周五入住，住两晚。",
+                "related_apis": ["search_hotels"]
+            }
+            ```
 
-## 示例4：需要更多信息
-对话历史：
-用户: 我想买点东西
-助手: 请问您想购买什么类型的商品呢？我可以帮您搜索电子产品、服装、日用品等各类商品。
+            ## 示例4：需要更多信息
+            对话历史：
+            用户: 我想买点东西
+            助手: 请问您想购买什么类型的商品呢？我可以帮您搜索电子产品、服装、日用品等各类商品。
 
-分析返回：
-```json
-{
-    "task_status": "needs_clarification",
-    "response_message": "我想买个新的笔记本电脑，预算在5000-8000元左右，主要用于办公和轻度游戏。",
-    "related_apis": ["search_products", "get_product_reviews"]
-}
-```
+            分析返回：
+            ```json
+            {
+                "task_status": "needs_clarification",
+                "response_message": "我想买个新的笔记本电脑，预算在5000-8000元左右，主要用于办公和轻度游戏。",
+                "related_apis": ["search_products", "get_product_reviews"]
+            }
+            ```
 
-## 示例5：部分完成，需要确认
-对话历史：
-用户: 帮我查一下我的快递
-助手: 我来帮您查询快递信息。[调用: get_delivery_status]
-工具[get_delivery_status]: {"error": "需要提供快递单号或手机号"}
-助手: 抱歉，查询快递需要您提供快递单号或收件人手机号，请问您方便提供吗？
+            ## 示例5：部分完成，需要确认
+            对话历史：
+            用户: 帮我查一下我的快递
+            助手: 我来帮您查询快递信息。[调用: get_delivery_status]
+            工具[get_delivery_status]: {"error": "需要提供快递单号或手机号"}
+            助手: 抱歉，查询快递需要您提供快递单号或收件人手机号，请问您方便提供吗？
 
-分析返回：
-```json
-{
-    "task_status": "needs_clarification",
-    "response_message": "快递单号是SF1234567890，是昨天下的单。",
-    "related_apis": ["get_delivery_status"]
-}
-```
+            分析返回：
+            ```json
+            {
+                "task_status": "needs_clarification",
+                "response_message": "快递单号是SF1234567890，是昨天下的单。",
+                "related_apis": ["get_delivery_status"]
+            }
+            ```
 
-返回JSON格式：
-```json
-{
-    "task_status": "completed" 或 "needs_clarification",
-    "response_message": "模拟的用户回复",
-    "related_apis": ["相关API名称，可选"]
-}
-```
-    """
+            返回JSON格式：
+            ```json
+            {
+                "task_status": "completed" 或 "needs_clarification",
+                "response_message": "模拟的用户回复",
+                "related_apis": ["相关API名称，可选"]
+            }
+            ```"""
+        )
 
         # Format conversation and API information
         formatted_conversation = conversation
         api_info = api_definitions
         
-        user_prompt = f"""对话历史：
-    {formatted_conversation}
+        user_prompt = dedent(
+            f"""对话历史：
+            {formatted_conversation}
 
-    可用的API功能：
-    {api_info}
+            可用的API功能：
+            {api_info}
 
-    请分析任务状态并生成相应的响应："""
+            请分析任务状态并生成相应的响应："""
+        )
 
         try:
             thinking_content, answer_content, tool_calls = generate(
@@ -250,19 +254,7 @@ class ToolAgent:
             return result
             
         except Exception as e:
-            logger.error(f"任务分析和响应生成失败: {e}")
-            
-            # Return default response based on conversation length
-            if len(conversation) > 4:  # Likely task is progressing
-                return {
-                    "task_status": "completed",
-                    "response_message": "任务已完成。还有其他需要帮助的吗？"
-                }
-            else:
-                return {
-                    "task_status": "needs_clarification",
-                    "response_message": "请提供更多信息以便我更好地帮助您。"
-                }
+            raise(f"data analysis and response generation failed: {e}")
 
     def _extract_json_from_response(self, response: str) -> str:
         """
@@ -367,22 +359,24 @@ class ToolAgent:
         
     def _generate_response_with_llm(self, api_name: str, parameters: Dict, api_definition: Dict) -> Optional[Dict]:
         """Generate API response using LLM"""
-        system_prompt = """你是一个API模拟器，需要根据API定义和输入参数生成真实的API响应。
+        system_prompt = dedent(
+            """你是一个API模拟器，需要根据API定义和输入参数生成真实的API响应。
 
-要求：
-1. 响应要符合API的返回值定义
-2. 数据要真实、合理，不要明显虚假
-3. 如果是查询类API，返回相关的数据
-4. 如果是操作类API，返回操作结果
-5. 返回JSON格式的数据，不要其他说明
-6. 数据要有适当的变化，不要总是相同的值
+            要求：
+            1. 响应要符合API的返回值定义
+            2. 数据要真实、合理，不要明显虚假
+            3. 如果是查询类API，返回相关的数据
+            4. 如果是操作类API，返回操作结果
+            5. 返回JSON格式的数据，不要其他说明
+            6. 数据要有适当的变化，不要总是相同的值
 
-```json
-{
-    "api_return": your mock up api return
-}
-```
-"""
+            ```json
+            {
+                "api_return": your mock up api return
+            }
+            ```
+            """
+        )
 
         api_info = {
             "name": api_name,
@@ -391,10 +385,12 @@ class ToolAgent:
             "returns": api_definition.get("returns", {})
         }
         
-        user_prompt = f"""API信息：
-{json.dumps(api_info, ensure_ascii=False, indent=2)}
+        user_prompt = dedent(
+            f"""API信息：
+            {json.dumps(api_info, ensure_ascii=False, indent=2)}
 
-请生成符合API定义的响应数据："""
+            请生成符合API定义的响应数据："""
+        )
 
         try:
             thinking_content, answer_content, tool_calls = generate(
@@ -417,11 +413,11 @@ class ToolAgent:
             result = json.loads(json_content)
             return result
         except RetryError as e:
-            # 处理重试失败的情况
-            logger.error(f"模拟工具返回时多次重试后失败: {e}")
-            raise RuntimeError(f"模拟工具返回时生成失败: 模型调用在重试多次后仍然失败") from e
+            # handle retry failure case
+            logger.error(f"Tool simulation failed after multiple retries: {e}")
+            raise RuntimeError(f"Tool simulation generation failed: Model call still failed after multiple retries") from e
         except Exception as e:
-            print(f"LLM API响应生成失败: {e}")
+            print(f"LLM API response generation failed: {e}")
             return None
 
     def _generate_error_response(self, error_message: str) -> Dict[str, Any]:

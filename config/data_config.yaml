@@ -13,11 +13,12 @@ sdg:
   complexity_adjustment_step: 0.1
     
   # API采样配置
-  max_apis_per_dialog: 5
+  min_apis_per_dialog: 3
+  max_apis_per_dialog: 7
 
   # subtasks最大最小值
-  min_subtasks: 2
-  max_subtasks: 3
+  min_subtasks: 1
+  max_subtasks: 1
 
   # 在subtasks中最大的react轮次
   max_react_steps: 10
@@ -46,7 +47,7 @@ sdg:
       temperature: 1.0
       max_tokens: 12384
       simulation_mode: "realistic"
-      error_rate: 0.2
+      error_rate: 0.05
       response_variance: 0.1
 
 # DLV (Dual-Layer Verification) 配置

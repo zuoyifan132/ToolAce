@@ -5,11 +5,14 @@ This module implements multi-subtask dialog generation with ReAct loops.
 Each dialog contains 1-N subtasks, and each subtask has a complete ReAct cycle.
 """
 
+import json
 import random
 import asyncio
 from concurrent.futures import ThreadPoolExecutor, as_completed
 import re
 from typing import List, Dict, Any, Optional
+
+from loguru import logger
 from .complexity_evaluator import ComplexityEvaluator
 from .agents import UserAgent, AssistantAgent, ToolAgent
 from ..utils.io_utils import save_to_json
@@ -38,9 +41,9 @@ class SDG:
             "max_subtasks": 5,
             "max_react_steps": 5,
             "max_apis_per_dialog": 5,
-            "batch_concurrency": 4,  # 并发数量
-            "batch_timeout": 300,    # 超时时间(秒)
-            "retry_attempts": 3      # 重试次数
+            "batch_concurrency": 4,  # Number of concurrent tasks
+            "batch_timeout": 300,    # Timeout in seconds
+            "retry_attempts": 3      # Number of retry attempts
         }
         
         # Merge with user config
@@ -68,21 +71,70 @@ class SDG:
         if self.config["assistant_model"] == "claude_3d7":
             tools = []
             for tool_desc in api_candidates:
-                # 创建工具副本以避免修改原始数据
+                # Create a copy of the tool to avoid modifying original data
                 tool = {}
                 for k, v in tool_desc.items():
                     if k == "name":
-                        # 规范化工具名称
+                        # Normalize tool name
                         tool["name"] = self._normalize_tool_name(v)
                     elif k == "parameters":
-                        # 转换参数类型并重命名为input_schema
+                        # Convert parameter types and rename to input_schema
                         tool["input_schema"] = self._convert_type_to_json_schema(v)
                     elif k not in ["returns", "required"]:
                         tool[k] = v
                 tools.append(tool)
             return tools
+        elif self.config["assistant_model"] == "openai_gpt":
+            tools = []
+            for tool_desc in api_candidates:
+                # Create a copy of the tool to avoid modifying original data
+                function_def = {}
+                
+                # Convert name and description
+                function_def["name"] = self._normalize_tool_name(tool_desc["name"])
+                function_def["description"] = tool_desc.get("description", "")
+                
+                # Convert parameters
+                if "parameters" in tool_desc:
+                    params = tool_desc["parameters"]
+                    if params["type"] == "dict":
+                        function_def["parameters"] = {
+                            "type": "object",
+                            "properties": {},
+                            "required": params.get("required", [])
+                        }
+                        
+                        # Convert each parameter
+                        for param_name, param_info in params.get("properties", {}).items():
+                            param_schema = {}
+                            
+                            # Convert type
+                            if param_info.get("type") in ["int", "float"]:
+                                param_schema["type"] = "number"
+                            elif param_info.get("type") == "dict":
+                                param_schema["type"] = "object"
+                            elif param_info.get("type") == "list":
+                                param_schema["type"] = "array"
+                            else:
+                                param_schema["type"] = param_info.get("type", "string")
+                            
+                            # Copy other fields
+                            for key in ["description", "default", "enum", "format"]:
+                                if key in param_info:
+                                    param_schema[key] = param_info[key]
+                            
+                            function_def["parameters"]["properties"][param_name] = param_schema
+                
+                # Wrap in OpenAI tool format
+                tool = {
+                    "type": "function",
+                    "function": function_def
+                }
+                
+                tools.append(tool)
+            return tools
         else:
-            return self._convert_apis_to_tools()  # Reuse existing method
+            raise NotImplementedError(f"Model {self.model_key} not supported")
         
     def _normalize_tool_name(self, name: str) -> str:
         """
@@ -94,20 +146,20 @@ class SDG:
         Returns:
             Normalized tool name
         """
-        # 1. 替换不允许的字符为下划线
+        # 1. Replace disallowed characters with underscores
         normalized = re.sub(r'[^a-zA-Z0-9_-]', '_', name)
         
-        # 2. 移除连续的下划线
+        # 2. Remove consecutive underscores
         normalized = re.sub(r'_+', '_', normalized)
         
-        # 3. 移除开头和结尾的下划线
+        # 3. Remove leading and trailing underscores
         normalized = normalized.strip('_-')
         
-        # 4. 如果为空，使用默认名称
+        # 4. Use default name if empty
         if not normalized:
             normalized = "tool"
         
-        # 5. 限制长度为128个字符
+        # 5. Limit length to 128 characters
         if len(normalized) > 128:
             normalized = normalized[:128]
         
@@ -127,7 +179,7 @@ class SDG:
             converted = {}
             for key, value in schema.items():
                 if key == "type":
-                    # 转换类型名称
+                    # Convert type names
                     if value == "dict":
                         converted[key] = "object"
                     elif value in ["int", "float"]:
@@ -137,14 +189,14 @@ class SDG:
                     else:
                         converted[key] = value
                 else:
-                    # 递归处理嵌套结构
+                    # Recursively process nested structures
                     converted[key] = self._convert_type_to_json_schema(value)
             return converted
         elif isinstance(schema, list):
-            # 处理列表中的每个元素
+            # Process each element in the list
             return [self._convert_type_to_json_schema(item) for item in schema]
         else:
-            # 原样返回其他类型
+            # Return other types as is
             return schema
 
     def generate_multi_subtask_dialog(self, 
@@ -177,6 +229,9 @@ class SDG:
         # convert tool to standard format
         api_candidates = self._convert_apis_to_tools_react(api_candidates)
         
+        logger.info(f"Sampled api_candidates:")
+        logger.info(json.dumps(api_candidates, ensure_ascii=False, indent=2))
+
         # Generate each subtask
         for subtask_idx in range(num_subtasks):
             # Generate user query for this subtask (can see global context)
@@ -307,12 +362,18 @@ class SDG:
         """
         for i in range(count):
             # Sample APIs for this dialog
-            api_candidates = api_pool.sample_apis(
-                count=self.config["max_apis_per_dialog"]
+            apis_candidates_count = random.randint(
+                self.config["min_apis_per_dialog"],
+                self.config["max_apis_per_dialog"]
             )
+            api_candidates = api_pool.sample_apis(apis_candidates_count)
             
             # Generate multi-subtask dialog
-            dialog = self.generate_multi_subtask_dialog(
-                api_candidates=api_candidates,
-                save_path=save_path
-            )
+            try:
+                dialog = self.generate_multi_subtask_dialog(
+                    api_candidates=api_candidates,
+                    save_path=save_path
+                )
+            except Exception as e:
+                logger.error(f"Failed to generate data for index {i}, skipping due to {e}")
+                continue
