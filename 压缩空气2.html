@@ -1,0 +1,783 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>压缩空气虚拟实验室</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', 'Microsoft YaHei', sans-serif;
+        }
+        
+        body {
+            background: linear-gradient(135deg, #1a2a6c, #2a3c7a);
+            color: #fff;
+            min-height: 100vh;
+            padding: 20px;
+        }
+        
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+        
+        header {
+            text-align: center;
+            margin-bottom: 30px;
+            padding: 20px;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 15px;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
+            backdrop-filter: blur(4px);
+        }
+        
+        h1 {
+            font-size: 2.5rem;
+            margin-bottom: 10px;
+            background: linear-gradient(90deg, #ff7e5f, #feb47b);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            text-shadow: 0 2px 10px rgba(0, 0, 0, 0.2);
+        }
+        
+        .subtitle {
+            font-size: 1.2rem;
+            opacity: 0.9;
+        }
+        
+        .lab-container {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+        
+        @media (max-width: 768px) {
+            .lab-container {
+                grid-template-columns: 1fr;
+            }
+        }
+        
+        .chamber {
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 15px;
+            padding: 20px;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
+            backdrop-filter: blur(4px);
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .chamber-title {
+            font-size: 1.5rem;
+            margin-bottom: 15px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        .air-title {
+            color: #ff7e5f;
+        }
+        
+        .water-title {
+            color: #4facfe;
+        }
+        
+        .chamber-display-container {
+            position: relative;
+            margin-bottom: 15px;
+        }
+        
+        .chamber-display {
+            height: 300px;
+            border: 2px solid rgba(255, 255, 255, 0.2);
+            border-radius: 10px;
+            position: relative;
+            overflow: hidden;
+            background: rgba(0, 0, 0, 0.2);
+            transition: height 0.5s ease;
+        }
+        
+        .air-display {
+            background: rgba(0, 0, 0, 0.3);
+        }
+        
+        .water-display {
+            background: rgba(32, 82, 149, 0.3);
+        }
+        
+        .controls {
+            display: flex;
+            gap: 10px;
+            margin-top: 15px;
+        }
+        
+        button {
+            flex: 1;
+            padding: 12px;
+            border: none;
+            border-radius: 8px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-size: 1rem;
+        }
+        
+        .air-btn {
+            background: linear-gradient(90deg, #ff7e5f, #feb47b);
+            color: white;
+        }
+        
+        .water-btn {
+            background: linear-gradient(90deg, #4facfe, #00f2fe);
+            color: white;
+        }
+        
+        button:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
+        }
+        
+        .data-panel {
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 15px;
+            padding: 20px;
+            margin-bottom: 30px;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
+            backdrop-filter: blur(4px);
+        }
+        
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+        
+        th, td {
+            padding: 12px 15px;
+            text-align: left;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        }
+        
+        th {
+            background: rgba(255, 255, 255, 0.1);
+        }
+        
+        .explanation {
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 15px;
+            padding: 25px;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
+            backdrop-filter: blur(4px);
+            line-height: 1.6;
+        }
+        
+        .explanation h2 {
+            margin-bottom: 15px;
+            color: #feb47b;
+        }
+        
+        .highlight {
+            color: #feb47b;
+            font-weight: bold;
+        }
+        
+        .particle {
+            position: absolute;
+            border-radius: 50%;
+            transition: all 0.8s ease;
+        }
+        
+        .air-particle {
+            background: radial-gradient(circle at 30% 30%, #ff9a8b, #ff6a6a);
+            box-shadow: 0 0 10px #ff6a6a;
+        }
+        
+        .water-particle {
+            background: radial-gradient(circle at 30% 30%, #4facfe, #0066cc);
+            box-shadow: 0 0 10px #4facfe;
+        }
+        
+        .compression-slider {
+            width: 100%;
+            margin: 10px 0;
+        }
+        
+        input[type="range"] {
+            width: 100%;
+            height: 8px;
+            border-radius: 5px;
+            outline: none;
+            -webkit-appearance: none;
+        }
+        
+        input[type="range"].air-slider::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            background: linear-gradient(90deg, #ff7e5f, #feb47b);
+            cursor: pointer;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.3);
+        }
+        
+        input[type="range"].air-slider {
+            background: rgba(255, 126, 95, 0.3);
+        }
+        
+        input[type="range"].water-slider::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            background: linear-gradient(90deg, #4facfe, #00f2fe);
+            cursor: pointer;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.3);
+        }
+        
+        input[type="range"].water-slider {
+            background: rgba(79, 172, 254, 0.3);
+        }
+        
+        .experiment-controls {
+            display: flex;
+            justify-content: center;
+            gap: 20px;
+            margin: 30px 0;
+        }
+        
+        .experiment-btn {
+            padding: 15px 30px;
+            font-size: 1.1rem;
+        }
+        
+        .comparison-btn {
+            background: linear-gradient(90deg, #8e2de2, #4a00e0);
+            color: white;
+        }
+        
+        .reset-btn {
+            background: linear-gradient(90deg, #11998e, #38ef7d);
+            color: white;
+        }
+        
+        .status-indicator {
+            display: inline-block;
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            margin-right: 8px;
+        }
+        
+        .active {
+            background: #38ef7d;
+            box-shadow: 0 0 10px #38ef7d;
+        }
+        
+        .compressed {
+            background: #ff6a6a;
+            box-shadow: 0 0 10px #ff6a6a;
+        }
+        
+        /* 压缩区域红框 */
+        .compression-zone {
+            position: absolute;
+            width: 100%;
+            bottom: 0;
+            border: 3px solid #ff3333;
+            border-radius: 8px;
+            transition: all 0.3s ease;
+            z-index: 5;
+            pointer-events: none;
+        }
+        
+        .particle-count {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            background: rgba(0, 0, 0, 0.5);
+            padding: 5px 10px;
+            border-radius: 10px;
+            font-size: 0.8rem;
+            z-index: 5;
+        }
+        
+        .compression-indicator {
+            position: absolute;
+            top: 10px;
+            left: 10px;
+            background: rgba(0, 0, 0, 0.5);
+            padding: 5px 10px;
+            border-radius: 10px;
+            font-size: 0.8rem;
+            z-index: 5;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>🔬 压缩空气虚拟实验室</h1>
+            <p class="subtitle">探索空气与水在微观粒子层面的压缩特性差异</p>
+        </header>
+        
+        <div class="lab-container">
+            <div class="chamber">
+                <h2 class="chamber-title air-title">
+                    <span class="status-indicator active" id="air-status"></span>
+                    🟥 空气粒子舱
+                </h2>
+                <div class="chamber-display-container">
+                    <div class="chamber-display air-display" id="air-display">
+                        <div class="compression-zone" id="air-zone"></div>
+                        <div class="particle-count" id="air-particle-count">粒子: 25</div>
+                        <div class="compression-indicator" id="air-compression-indicator">压缩: 0%</div>
+                    </div>
+                </div>
+                <div class="compression-slider">
+                    <input type="range" min="0" max="90" value="0" class="air-slider" id="air-slider">
+                </div>
+                <p>压缩程度: <span id="air-compression-level">0%</span> (最大90%)</p>
+            </div>
+            
+            <div class="chamber">
+                <h2 class="chamber-title water-title">
+                    <span class="status-indicator active" id="water-status"></span>
+                    🟦 水粒子舱
+                </h2>
+                <div class="chamber-display-container">
+                    <div class="chamber-display water-display" id="water-display">
+                        <div class="compression-zone" id="water-zone"></div>
+                        <div class="particle-count" id="water-particle-count">粒子: 40</div>
+                        <div class="compression-indicator" id="water-compression-indicator">压缩: 0%</div>
+                    </div>
+                </div>
+                <div class="compression-slider">
+                    <input type="range" min="0" max="1" step="0.1" value="0" class="water-slider" id="water-slider">
+                </div>
+                <p>压缩程度: <span id="water-compression-level">0%</span> (最大1%)</p>
+            </div>
+        </div>
+        
+        <div class="data-panel">
+            <h2>📊 实时数据监控</h2>
+            <table>
+                <thead>
+                    <tr>
+                        <th>参数</th>
+                        <th>空气舱</th>
+                        <th>水舱</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td>粒子间距</td>
+                        <td id="air-spacing">8.2 nm</td>
+                        <td id="water-spacing">0.3 nm</td>
+                    </tr>
+                    <tr>
+                        <td>可压缩性</td>
+                        <td id="air-compressibility">高</td>
+                        <td id="water-compressibility">极低</td>
+                    </tr>
+                    <tr>
+                        <td>当前状态</td>
+                        <td id="air-state">自由运动</td>
+                        <td id="water-state">紧密堆积</td>
+                    </tr>
+                    <tr>
+                        <td>容器体积</td>
+                        <td id="air-volume">100%</td>
+                        <td id="water-volume">100%</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+        
+        <div class="experiment-controls">
+            <button class="experiment-btn reset-btn" onclick="resetExperiment()">重置实验</button>
+        </div>
+        
+        <div class="explanation">
+            <h2>💡 科学原理解释</h2>
+            <p id="explanation-text">拖动滑动条开始实验，观察空气与水的压缩特性差异。</p>
+            <div id="detailed-explanation" style="margin-top: 15px; display: none;">
+                <p><span class="highlight">空气压缩性高</span>：因为空气分子间距大(8.2nm)，有充足的压缩空间。当施加压力时，分子可以靠得更近，运动速度增加。</p>
+                <p><span class="highlight">水压缩性极低</span>：因为水分子间距小(0.3nm)，已经紧密堆积，几乎没有进一步压缩的空间。</p>
+                <p><span class="highlight">科学原理</span>：物质的可压缩性取决于粒子间的间距大小。红色边框表示压缩区域，所有粒子都被限制在此区域内运动。</p>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // 初始化变量
+        let airCompression = 0;
+        let waterCompression = 0;
+        let airParticles = [];
+        let waterParticles = [];
+        const airParticleCount = 25;
+        const waterParticleCount = 40;
+        let airAnimationId;
+        let waterAnimationId;
+        
+        // 初始化实验室
+        function initLab() {
+            createParticles('air-display', airParticleCount, 'air-particle', airParticles, 15);
+            createParticles('water-display', waterParticleCount, 'water-particle', waterParticles, 3);
+            updateDataPanel();
+            
+            // 初始化压缩区域
+            document.getElementById('air-zone').style.height = '300px';
+            document.getElementById('water-zone').style.height = '300px';
+            
+            // 添加滑动条事件监听
+            document.getElementById('air-slider').addEventListener('input', function(e) {
+                airCompression = parseInt(e.target.value);
+                updateAirCompression();
+            });
+            
+            document.getElementById('water-slider').addEventListener('input', function(e) {
+                waterCompression = parseFloat(e.target.value);
+                updateWaterCompression();
+            });
+            
+            // 启动粒子动画
+            startAirAnimation();
+            startWaterAnimation();
+        }
+        
+        // 创建粒子
+        function createParticles(containerId, count, className, particlesArray, spacing) {
+            const container = document.getElementById(containerId);
+            // 清除现有粒子，但保留压缩区域和计数
+            const zone = container.querySelector('.compression-zone');
+            const countElement = container.querySelector('.particle-count');
+            const compressionIndicator = container.querySelector('.compression-indicator');
+            container.innerHTML = '';
+            if (zone) {
+                container.appendChild(zone);
+            }
+            if (countElement) {
+                container.appendChild(countElement);
+            }
+            if (compressionIndicator) {
+                container.appendChild(compressionIndicator);
+            }
+            particlesArray.length = 0;
+            
+            const containerWidth = container.clientWidth;
+            const containerHeight = container.clientHeight;
+            
+            for (let i = 0; i < count; i++) {
+                const particle = document.createElement('div');
+                particle.className = `particle ${className}`;
+                
+                // 随机位置，但确保不会太靠近边缘
+                const size = className === 'air-particle' ? 10 : 14;
+                const maxX = containerWidth - size;
+                const maxY = containerHeight - size;
+                
+                let x, y, validPosition;
+                let attempts = 0;
+                
+                // 尝试找到不重叠的位置
+                do {
+                    x = Math.random() * maxX;
+                    y = Math.random() * maxY;
+                    validPosition = true;
+                    
+                    // 检查是否与现有粒子太近
+                    for (const p of particlesArray) {
+                        const dx = x - p.x;
+                        const dy = y - p.y;
+                        const distance = Math.sqrt(dx * dx + dy * dy);
+                        
+                        if (distance < spacing) {
+                            validPosition = false;
+                            break;
+                        }
+                    }
+                    
+                    attempts++;
+                    if (attempts > 100) break; // 防止无限循环
+                } while (!validPosition);
+                
+                particle.style.width = `${size}px`;
+                particle.style.height = `${size}px`;
+                particle.style.left = `${x}px`;
+                particle.style.top = `${y}px`;
+                
+                container.appendChild(particle);
+                
+                particlesArray.push({
+                    element: particle,
+                    x: x,
+                    y: y,
+                    size: size,
+                    vx: (Math.random() - 0.5) * (className === 'air-particle' ? 1.2 : 0.05),
+                    vy: (Math.random() - 0.5) * (className === 'air-particle' ? 1.2 : 0.05)
+                });
+            }
+        }
+        
+        // 空气粒子动画
+        function startAirAnimation() {
+            const container = document.getElementById('air-display');
+            const containerWidth = container.clientWidth;
+            const zone = document.getElementById('air-zone');
+            
+            function animate() {
+                const zoneHeight = parseInt(zone.style.height) || 300;
+                const containerHeight = container.clientHeight;
+                const availableHeight = zoneHeight;
+                const minY = containerHeight - availableHeight;
+                
+                // 压缩时速度明显加快
+                const speedMultiplier = 1 + (airCompression / 90) * 4;
+                
+                for (const p of airParticles) {
+                    // 更新位置
+                    p.x += p.vx * speedMultiplier;
+                    p.y += p.vy * speedMultiplier;
+                    
+                    // 边界检测 - 限制在红框内（左右边界）
+                    if (p.x <= 0 || p.x >= containerWidth - p.size) {
+                        p.vx *= -1;
+                        p.x = p.x <= 0 ? 0 : containerWidth - p.size;
+                    }
+                    
+                    // 边界检测 - 限制在红框内（上下边界）
+                    if (p.y <= minY || p.y >= containerHeight - p.size) {
+                        p.vy *= -1;
+                        p.y = p.y <= minY ? minY : containerHeight - p.size;
+                    }
+                    
+                    // 强制限制粒子必须在红框内
+                    if (p.y < minY) {
+                        p.y = minY;
+                        p.vy = Math.abs(p.vy);
+                    }
+                    if (p.y > containerHeight - p.size) {
+                        p.y = containerHeight - p.size;
+                        p.vy = -Math.abs(p.vy);
+                    }
+                    if (p.x < 0) {
+                        p.x = 0;
+                        p.vx = Math.abs(p.vx);
+                    }
+                    if (p.x > containerWidth - p.size) {
+                        p.x = containerWidth - p.size;
+                        p.vx = -Math.abs(p.vx);
+                    }
+                    
+                    // 更新元素位置
+                    p.element.style.left = `${p.x}px`;
+                    p.element.style.top = `${p.y}px`;
+                }
+                
+                airAnimationId = requestAnimationFrame(animate);
+            }
+            
+            animate();
+        }
+        
+        // 水粒子动画
+        function startWaterAnimation() {
+            const container = document.getElementById('water-display');
+            const containerWidth = container.clientWidth;
+            const zone = document.getElementById('water-zone');
+            
+            function animate() {
+                const zoneHeight = parseInt(zone.style.height) || 300;
+                const containerHeight = container.clientHeight;
+                const availableHeight = zoneHeight;
+                const minY = containerHeight - availableHeight;
+                
+                // 压缩时速度明显加快
+                const speedMultiplier = 1 + (waterCompression / 1) * 2;
+                
+                for (const p of waterParticles) {
+                    // 水粒子运动非常有限
+                    p.x += p.vx * speedMultiplier;
+                    p.y += p.vy * speedMultiplier;
+                    
+                    // 边界检测 - 限制在红框内（左右边界）
+                    if (p.x <= 0 || p.x >= containerWidth - p.size) {
+                        p.vx *= -1;
+                        p.x = p.x <= 0 ? 0 : containerWidth - p.size;
+                    }
+                    
+                    // 边界检测 - 限制在红框内（上下边界）
+                    if (p.y <= minY || p.y >= containerHeight - p.size) {
+                        p.vy *= -1;
+                        p.y = p.y <= minY ? minY : containerHeight - p.size;
+                    }
+                    
+                    // 强制限制粒子必须在红框内
+                    if (p.y < minY) {
+                        p.y = minY;
+                        p.vy = Math.abs(p.vy);
+                    }
+                    if (p.y > containerHeight - p.size) {
+                        p.y = containerHeight - p.size;
+                        p.vy = -Math.abs(p.vy);
+                    }
+                    if (p.x < 0) {
+                        p.x = 0;
+                        p.vx = Math.abs(p.vx);
+                    }
+                    if (p.x > containerWidth - p.size) {
+                        p.x = containerWidth - p.size;
+                        p.vx = -Math.abs(p.vx);
+                    }
+                    
+                    // 更新元素位置
+                    p.element.style.left = `${p.x}px`;
+                    p.element.style.top = `${p.y}px`;
+                }
+                
+                waterAnimationId = requestAnimationFrame(animate);
+            }
+            
+            animate();
+        }
+        
+        // 更新空气压缩
+        function updateAirCompression() {
+            document.getElementById('air-compression-level').textContent = `${airCompression}%`;
+            document.getElementById('air-compression-indicator').textContent = `压缩: ${airCompression}%`;
+            
+            // 更新压缩区域高度（从300px压缩到30px）
+            const zoneHeight = 300 - (airCompression / 100) * 270;
+            document.getElementById('air-zone').style.height = `${zoneHeight}px`;
+            
+            // 立即调整所有粒子位置到新区域内
+            const container = document.getElementById('air-display');
+            const containerWidth = container.clientWidth;
+            const containerHeight = container.clientHeight;
+            const minY = containerHeight - zoneHeight;
+            
+            for (const p of airParticles) {
+                // 强制将所有粒子移入红框区域
+                if (p.y < minY) {
+                    p.y = minY + (p.y % (zoneHeight - p.size));
+                    if (p.y < minY) p.y = minY;
+                    if (p.y > containerHeight - p.size) p.y = containerHeight - p.size;
+                }
+                // 确保粒子在左右边界内
+                if (p.x < 0) p.x = 0;
+                if (p.x > containerWidth - p.size) p.x = containerWidth - p.size;
+                
+                // 立即更新显示位置
+                p.element.style.left = `${p.x}px`;
+                p.element.style.top = `${p.y}px`;
+            }
+            
+            updateDataPanel();
+            
+            if (airCompression > 0) {
+                document.getElementById('explanation-text').textContent = 
+                    `空气被压缩了${airCompression}%！注意粒子被限制在红框内，运动速度明显变快，间距变小。`;
+                document.getElementById('detailed-explanation').style.display = 'block';
+            }
+        }
+        
+        // 更新水压缩
+        function updateWaterCompression() {
+            document.getElementById('water-compression-level').textContent = `${waterCompression.toFixed(1)}%`;
+            document.getElementById('water-compression-indicator').textContent = `压缩: ${waterCompression.toFixed(1)}%`;
+            
+            // 更新压缩区域高度（从300px压缩到297px）
+            const zoneHeight = 300 - (waterCompression / 1) * 3;
+            document.getElementById('water-zone').style.height = `${zoneHeight}px`;
+            
+            // 立即调整所有粒子位置到新区域内
+            const container = document.getElementById('water-display');
+            const containerWidth = container.clientWidth;
+            const containerHeight = container.clientHeight;
+            const minY = containerHeight - zoneHeight;
+            
+            for (const p of waterParticles) {
+                // 强制将所有粒子移入红框区域
+                if (p.y < minY) {
+                    p.y = minY + (p.y % (zoneHeight - p.size));
+                    if (p.y < minY) p.y = minY;
+                    if (p.y > containerHeight - p.size) p.y = containerHeight - p.size;
+                }
+                // 确保粒子在左右边界内
+                if (p.x < 0) p.x = 0;
+                if (p.x > containerWidth - p.size) p.x = containerWidth - p.size;
+                
+                // 立即更新显示位置
+                p.element.style.left = `${p.x}px`;
+                p.element.style.top = `${p.y}px`;
+            }
+            
+            updateDataPanel();
+            
+            if (waterCompression > 0) {
+                document.getElementById('explanation-text').textContent = 
+                    `水被压缩了${waterCompression.toFixed(1)}%！注意到几乎没有变化吗？水分子已经紧密堆积，几乎没有压缩空间。`;
+                document.getElementById('detailed-explanation').style.display = 'block';
+            }
+        }
+        
+        // 重置实验
+        function resetExperiment() {
+            airCompression = 0;
+            waterCompression = 0;
+            
+            document.getElementById('air-slider').value = 0;
+            document.getElementById('water-slider').value = 0;
+            document.getElementById('air-compression-level').textContent = '0%';
+            document.getElementById('water-compression-level').textContent = '0%';
+            document.getElementById('air-compression-indicator').textContent = '压缩: 0%';
+            document.getElementById('water-compression-indicator').textContent = '压缩: 0%';
+            
+            document.getElementById('air-zone').style.height = '300px';
+            document.getElementById('water-zone').style.height = '300px';
+            
+            document.getElementById('explanation-text').textContent = 
+                "实验已重置！拖动滑动条开始新的探索。";
+            document.getElementById('detailed-explanation').style.display = 'none';
+            
+            // 停止动画
+            cancelAnimationFrame(airAnimationId);
+            cancelAnimationFrame(waterAnimationId);
+            
+            initLab();
+        }
+        
+        // 更新数据面板
+        function updateDataPanel() {
+            // 更新空气数据
+            document.getElementById('air-spacing').textContent = 
+                `${(8.2 - (airCompression / 100) * 7.5).toFixed(1)} nm`;
+            document.getElementById('air-volume').textContent = 
+                `${100 - airCompression}%`;
+            document.getElementById('air-state').textContent = 
+                airCompression > 0 ? '被压缩' : '自由运动';
+            
+            // 更新水数据
+            document.getElementById('water-spacing').textContent = 
+                `${(0.3 - (waterCompression / 100) * 0.05).toFixed(2)} nm`;
+            document.getElementById('water-volume').textContent = 
+                `${100 - waterCompression * 0.1}%`;
+            document.getElementById('water-state').textContent = 
+                waterCompression > 0 ? '轻微压缩' : '紧密堆积';
+            
+            // 更新状态指示器
+            document.getElementById('air-status').className = 
+                `status-indicator ${airCompression > 0 ? 'compressed' : 'active'}`;
+            document.getElementById('water-status').className = 
+                `status-indicator ${waterCompression > 0 ? 'compressed' : 'active'}`;
+        }
+        
+        // 页面加载完成后初始化实验室
+        window.onload = initLab;
+    </script>
+</body>
+</html>
